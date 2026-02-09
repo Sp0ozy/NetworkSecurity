@@ -1,4 +1,4 @@
-from networksecurity.exceptions.exception import NetworkSecurityError
+from networksecurity.exceptions.exception import NetworkSecurityException
 from networksecurity.logging.logger import logging
 import os, sys
 import yaml
@@ -11,4 +11,4 @@ def read_yaml_file(file_path: str) -> dict:
         with open(file_path, 'rb') as file:
             return yaml.safe_load(file)
     except Exception as e:
-        raise NetworkSecurityError(e, sys)
+        raise NetworkSecurityException(e, sys)

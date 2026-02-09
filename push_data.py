@@ -8,7 +8,7 @@ from pymongo.server_api import ServerApi
 
 import pandas as pd
 import numpy as np
-from networksecurity.exceptions.exception import NetworkSecurityError
+from networksecurity.exceptions.exception import NetworkSecurityException
 from networksecurity.logging.logger import logging
 
 
@@ -26,7 +26,7 @@ class NetworkDataExtract():
             self.collection = self.database[collection]
 
         except Exception as e:
-            raise NetworkSecurityError(e, sys)
+            raise NetworkSecurityException(e, sys)
         
     def csv_to_json(self, file_path):
         try:
@@ -35,14 +35,14 @@ class NetworkDataExtract():
             records=data.to_dict(orient="records")
             return records
         except Exception as e:
-            raise NetworkSecurityError(e, sys)
+            raise NetworkSecurityException(e, sys)
         
     def insert_data_to_mongodb(self, records):
         try:
             self.collection.insert_many(records)
             return (len(records))
         except Exception as e:
-            raise NetworkSecurityError(e, sys)
+            raise NetworkSecurityException(e, sys)
 
 if __name__ == "__main__":
     networkObj = NetworkDataExtract(

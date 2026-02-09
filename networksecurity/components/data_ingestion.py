@@ -5,7 +5,7 @@ import pandas as pd
 import pymongo
 from sklearn.model_selection import train_test_split
 
-from networksecurity.exceptions.exception import NetworkSecurityError
+from networksecurity.exceptions.exception import NetworkSecurityException
 from networksecurity.logging.logger import logging
 
 # configuration of Data Ingestion Component
@@ -22,7 +22,7 @@ class DataIngestion:
             self.data_ingestion_config = data_ingestion_config
             logging.info(f"Data Ingestion component initialized with config: {self.data_ingestion_config}")
         except Exception as e:
-            raise NetworkSecurityError(e,sys) from e
+            raise NetworkSecurityException(e,sys) from e
         
     def export_colletion_as_dataframe(self):
         try:
@@ -43,7 +43,7 @@ class DataIngestion:
             df.replace('na', np.nan, inplace=True)
             return df
         except Exception as e:
-            raise NetworkSecurityError(e,sys) from e
+            raise NetworkSecurityException(e,sys) from e
         
     def export_data_into_feature_store(self,df:pd.DataFrame):
         try:
@@ -53,7 +53,7 @@ class DataIngestion:
             df.to_csv(feature_store_file_path, index=False, header=True)
             logging.info(f"Data exported to feature store at {feature_store_file_path}")
         except Exception as e:
-            raise NetworkSecurityError(e,sys) from e
+            raise NetworkSecurityException(e,sys) from e
     
     def split_data_as_train_test(self, df:pd.DataFrame):
         try:
@@ -69,9 +69,9 @@ class DataIngestion:
             logging.info(f"Test set saved at {self.data_ingestion_config.test_file_path}")
 
         except Exception as e:
-            raise NetworkSecurityError(e,sys) from e
+            raise NetworkSecurityException(e,sys) from e
         
-    def initiate_data_ingestion(self):
+    def initiate_data_ingestion(self) -> DataIngestionArtifact:
         try:
             dataframe = self.export_colletion_as_dataframe()
             logging.info("Data is successfully ingested into the DataFrame")
@@ -87,4 +87,4 @@ class DataIngestion:
             return data_ingestion_artifact
         
         except Exception as e:
-            raise NetworkSecurityError(e,sys) from e
+            raise NetworkSecurityException(e,sys) from e
