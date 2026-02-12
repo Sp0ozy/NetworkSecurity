@@ -40,6 +40,7 @@ Defining common constant variable for data transformation
 DATA_TRANSFORMATION_DIR_NAME:str = "data_transformation"
 DATA_TRANSFORMATION_TRANSFORMED_DATA_DIR:str = "transformed"
 DATA_TRANSFORMATION_OBJECT_DIR:str = "transformer_object"
+PREPROCESSING_OBJECT_FILE_NAME:str = "preprocessing.pkl"
 
 DATA_TRANSFORMATION_IMPUTER_PARAMS: dict = {
     "missing_values": np.nan,

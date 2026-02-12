@@ -71,7 +71,7 @@ class DataTransformationConfig:
             self.data_transformation_dir,
             training_pipeline.DATA_TRANSFORMATION_TRANSFORMED_DATA_DIR,
             training_pipeline.TEST_FILE_NAME.replace("csv","npy"))
-        self.transformer_object_file_path:str = os.path.join(
+        self.transformed_object_file_path:str = os.path.join(
             self.data_transformation_dir,
             training_pipeline.DATA_TRANSFORMATION_OBJECT_DIR,
-            "transformer_object.pkl")
+            training_pipeline.PREPROCESSING_OBJECT_FILE_NAME)
