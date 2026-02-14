@@ -13,6 +13,9 @@ TRAIN_FILE_NAME:str = "train.csv"
 TEST_FILE_NAME:str = "test.csv"
 SCHEMA_FILE_PATH:str = os.path.join("data_schema","schema.yaml")
 
+SAVED_MODEL_DIR:str = "saved_models"
+MODEL_FILE_NAME:str = "model.pkl"
+
 """
 Defining common constant variable for data ingestion
 """

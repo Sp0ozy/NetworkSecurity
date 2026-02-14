@@ -40,6 +40,16 @@ def save_numpy_array_data(file_path: str, array: np.array) -> None:
     except Exception as e:
         raise NetworkSecurityException(e, sys)
     
+def load_numpy_array_data(file_path: str) -> np.array:
+    """
+    Loads a numpy array from a file.
+    """
+    try:
+        with open(file_path, 'rb') as file:
+            return np.load(file)
+    except Exception as e:
+        raise NetworkSecurityException(e, sys)
+    
 def save_object(file_path: str, obj: object) -> None:
     """
     Saves a Python object to a file using pickle.
@@ -48,5 +58,15 @@ def save_object(file_path: str, obj: object) -> None:
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         with open(file_path, 'wb') as file:
             pickle.dump(obj, file)
+    except Exception as e:
+        raise NetworkSecurityException(e, sys)
+
+def load_object(file_path: str) -> object:
+    """
+    Loads a Python object from a file using pickle.
+    """
+    try:
+        with open(file_path, 'rb') as file:
+            return pickle.load(file)
     except Exception as e:
         raise NetworkSecurityException(e, sys)
