@@ -1,7 +1,7 @@
 import os
 import sys
 
-from sklearn.base import r2_score
+from sklearn.metrics import r2_score
 from sklearn.model_selection import GridSearchCV
 from networksecurity.entity.artifact_entity import ClassificationMetricArtifact
 from networksecurity.exceptions.exception import NetworkSecurityException
@@ -34,9 +34,9 @@ def evaluate_models(X_train, y_train, X_test, y_test, params, models: dict) -> d
         report={}
         for i in range(len(list(models))):
             model = list(models.values())[i]
-            params = params[list(models.keys())[i]]
+            model_params = params[list(models.keys())[i]]
 
-            gs = GridSearchCV(model, params, cv=3)
+            gs = GridSearchCV(model, model_params, cv=3)
             gs.fit(X_train, y_train)
 
             model.set_params(**gs.best_params_)

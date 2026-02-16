@@ -14,15 +14,10 @@ from sklearn.metrics import r2_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier
+import mlflow
 
 import dagshub
 dagshub.init(repo_owner='Sp0ozy', repo_name='NetworkSecurity', mlflow=True)
-
-import mlflow
-with mlflow.start_run():
-  mlflow.log_param('parameter name', 'value')
-  mlflow.log_metric('metric name', 1)
-
 
 class ModelTrainer:
     def __init__(self, model_trainer_config: ModelTrainerConfig,
@@ -32,6 +27,13 @@ class ModelTrainer:
             self.data_transformation_artifact: DataTransformationArtifact = data_transformation_artifact
         except Exception as e:
             raise NetworkSecurityException(e, sys)
+        
+    def track_mlflow(self, best_model, classificatio_metric):
+        with mlflow.start_run():
+            mlflow.log_param("f1_score", classificatio_metric.f1_score)
+            mlflow.log_param("precision_score", classificatio_metric.precision_score)
+            mlflow.log_param("recall_score", classificatio_metric.recall_score)
+            mlflow.sklearn.log_model(best_model, "model")
         
     def train_model(self, X_train, y_train, X_test, y_test):
         try:
@@ -59,26 +61,26 @@ class ModelTrainer:
                     "max_depth": [None, 3, 5, 8, 12],
                     # "min_samples_split": [2, 5, 10],
                     # "min_samples_leaf": [1, 2, 5, 10],
-                    "max_features": [None, "sqrt", "log2"]
+                    # "max_features": [None, "sqrt", "log2"]
                 },
                 "RandomForestClassifier": {
-                    "n_estimators": [300, 600, 1000],
+                    # "n_estimators": [300, 600, 1000],
                     "max_depth": [None, 6, 10, 16],
-                    "min_samples_split": [2, 5, 10],
+                    # "min_samples_split": [2, 5, 10],
                     # "min_samples_leaf": [1, 2, 5],
                     # "max_features": ["sqrt", 0.5, 1.0],
                     # "bootstrap": [True]
                 },
                 "GradientBoostingClassifier": {
                     "learning_rate": [0.05, 0.1, 0.2],
-                    "n_estimators": [200, 500, 1000],
+                    # "n_estimators": [200, 500, 1000],
                     # "max_depth": [2, 3, 4],
                     # "subsample": [0.7, 0.85, 1.0],
                     # "min_samples_leaf": [1, 3, 10],
                     # "max_features": [None, "sqrt"]
                 },
                 "AdaBoostClassifier": {
-                    "n_estimators": [200, 500, 1000],
+                    # "n_estimators": [200, 500, 1000],
                     "learning_rate": [0.01, 0.05, 0.1, 0.2],
                     # "loss": ["linear", "square", "exponential"]
                 }
@@ -96,10 +98,11 @@ class ModelTrainer:
             y_train_pred = best_model.predict(X_train)
             classification_train_metric = get_classification_score(y_true=y_train, y_pred=y_train_pred)
             
-            # Track the mlflow 
-
             y_test_pred = best_model.predict(X_test)
             classification_test_metric = get_classification_score(y_true=y_test, y_pred=y_test_pred)
+
+            # Track the mlflow
+            self.track_mlflow(best_model, classification_test_metric)
 
             preprocessor = load_object(file_path=self.data_transformation_artifact.transformed_object_file_path)
 
@@ -134,6 +137,7 @@ class ModelTrainer:
             X_test, y_test = test_arr[:,:-1], test_arr[:,-1]
 
             model_trainer_artifact = self.train_model(X_train, y_train, X_test, y_test)
+
             return model_trainer_artifact
         except Exception as e:
             raise NetworkSecurityException(e, sys)
