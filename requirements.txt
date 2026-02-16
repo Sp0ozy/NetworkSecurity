@@ -3,5 +3,11 @@ numpy
 scikit-learn
 pymongo[srv]==3.12
 pymongo
+certifi
+mlflow
+pyaml
+dagshub
+fastapi
+uvicorn
 
 -e .
