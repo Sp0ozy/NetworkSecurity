@@ -2,7 +2,7 @@ import os
 import sys
 
 import certifi
-from fastapi import FastAPI
+from fastapi import FastAPI, File, Request, UploadFile
 import pymongo
 
 from networksecurity.entity.config_entity import TrainingPipelineConfig
@@ -19,6 +19,8 @@ from fastapi.responses import Response
 from starlette.responses import RedirectResponse
 
 import pandas as pd
+
+from networksecurity.utils.ml_utils import NetworkModel
 
 ca=certifi.where()
 
@@ -43,6 +45,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi.templating import Jinja2Templates
+templates = Jinja2Templates(directory="templates")
 
 @app.get("/", tags=["authentication"])
 async def index():
@@ -54,6 +58,25 @@ async def train_route():
         train_pipeline = TrainPipeline( training_pipeline_config=TrainingPipelineConfig())
         train_pipeline.run_pipeline()
         return Response(content="Training successful!!", media_type="text/plain")
+    except Exception as e:
+        raise NetworkSecurityException(e, sys)
+
+@app.post("/predict")
+async def predict_route(request: Request, file:UploadFile = File(...)):
+    try:
+        df=pd.read_csv(file.file)
+        preprocessor = load_object("final_model/preprocessor.pkl")
+        model = load_object("final_model/model.pkl")
+        network_model = NetworkModel(preprocessor=preprocessor, model=model)
+        print(df.iloc[0])
+        y_pred  = network_model.predict(df)
+        print(y_pred)
+        df["predicted_column"] = y_pred
+        df.to_csv("prediction_output/output.csv", index=False)
+        table_html = df.to_html(classes = "table table-striped")
+
+        return templates.TemplateResponse("table.html", {"request": request, "table_html": table_html})
+
     except Exception as e:
         raise NetworkSecurityException(e, sys)
 
