@@ -4,8 +4,7 @@ scikit-learn
 pymongo[srv]==3.12
 certifi
 mlflow
-pyaml
-pymongo
+PyYAML
 dagshub
 fastapi
 uvicorn
