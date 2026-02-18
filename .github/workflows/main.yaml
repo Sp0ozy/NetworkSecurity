@@ -80,6 +80,11 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Clean up disk space before deployment
+        run: |
+          docker system prune -a -f --volumes
+          df -h
+
       - name: Pull latest image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -101,6 +106,6 @@ jobs:
             -e AWS_REGION='${{ secrets.AWS_REGION }}' \
             $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      - name: Clean unused images and containers
+      - name: Clean up old images after deployment
         run: |
-          docker system prune -f
+          docker image prune -a -f
