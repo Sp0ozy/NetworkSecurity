@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - main
-    patch-ignore:
-      - 'README.md'
+    paths-ignore:
+      - "README.md"
 
 jobs:
   integration:
@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Lint code
         run: echo "Linting repository"
@@ -21,14 +21,16 @@ jobs:
       - name: Run unit tests
         run: echo "Running unit tests"
 
-
   build-and-push-ecr-image:
     name: Continuous Delivery
     runs-on: ubuntu-latest
     needs: integration
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Utilities
         run: |
@@ -36,7 +38,7 @@ jobs:
           sudo apt-get install -y jq unzip
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -44,4 +46,4 @@ jobs:
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
