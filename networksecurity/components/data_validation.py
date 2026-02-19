@@ -115,7 +115,8 @@ class DataValidation:
                 self.data_validation_config.invalid_test_file_path=None
             
             if len(error_messages) > 0:
-                raise Exception(f"Data Validation Error: {'\n'.join(error_messages)}")
+                error_msg = '\n'.join(error_messages)
+                raise Exception(f"Data Validation Error: {error_msg}")
 
             return DataValidationArtifact(
                 validation_status = train_schema_status and test_schema_status and train_drift_status and test_drift_status,
