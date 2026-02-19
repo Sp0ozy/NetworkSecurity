@@ -17,7 +17,6 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier,
 import mlflow
 
 import dagshub
-dagshub.init(repo_owner='Sp0ozy', repo_name='NetworkSecurity', mlflow=True)
 
 class ModelTrainer:
     def __init__(self, model_trainer_config: ModelTrainerConfig,
@@ -29,6 +28,11 @@ class ModelTrainer:
             raise NetworkSecurityException(e, sys)
         
     def track_mlflow(self, best_model, classificatio_metric):
+        try:
+            dagshub.init(repo_owner='Sp0ozy', repo_name='NetworkSecurity', mlflow=True)
+        except Exception as e:
+            logging.warning(f"DagHub initialization failed: {e}. MLflow tracking may not work.")
+        
         with mlflow.start_run():
             mlflow.log_param("f1_score", classificatio_metric.f1_score)
             mlflow.log_param("precision_score", classificatio_metric.precision_score)
