@@ -27,7 +27,7 @@ ca=certifi.where()
 from dotenv import load_dotenv   
 load_dotenv() 
 
-mongodb_urls = os.getenv("MONGODB_URI")
+mongodb_urls = os.getenv("MONGO_DB_URL")
 
 client = pymongo.MongoClient(mongodb_urls, tlsCAFile=ca)
 
