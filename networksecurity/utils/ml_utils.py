@@ -1,11 +1,10 @@
 import os
 import sys
 
-from sklearn.metrics import r2_score
 from sklearn.model_selection import GridSearchCV
 from networksecurity.entity.artifact_entity import ClassificationMetricArtifact
 from networksecurity.exceptions.exception import NetworkSecurityException
-from networksecurity.logging.logger import logging  
+from networksecurity.logging.logger import logging
 from sklearn.metrics import precision_score, recall_score, f1_score
 
 
@@ -53,9 +52,9 @@ def evaluate_models(X_train, y_train, X_test, y_test, params, models: dict) -> d
             y_train_pred = model.predict(X_train)
             y_test_pred = model.predict(X_test)
 
-            train_model_score = r2_score(y_train, y_train_pred)
-            test_model_score = r2_score(y_test, y_test_pred)
-            logging.info(f"{model_name} — train R2={train_model_score:.4f}  |  test R2={test_model_score:.4f}")
+            train_model_score = f1_score(y_train, y_train_pred)
+            test_model_score = f1_score(y_test, y_test_pred)
+            logging.info(f"{model_name} — train f1={train_model_score:.4f}  |  test f1={test_model_score:.4f}")
 
             report[model_name] = test_model_score
         return report

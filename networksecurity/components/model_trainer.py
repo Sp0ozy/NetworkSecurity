@@ -102,7 +102,7 @@ class ModelTrainer:
                 list(model_report.values()).index(best_model_score)
             ]
             best_model = models[best_model_name]
-            logging.info(f"Best model: {best_model_name}  (test R2={best_model_score:.4f})")
+            logging.info(f"Best model: {best_model_name}  (test f1={best_model_score:.4f})")
 
             if best_model_score < self.model_trainer_config.expected_score:
                 logging.warning(f"Best model score {best_model_score:.4f} is below expected threshold {self.model_trainer_config.expected_score:.4f}")
