@@ -78,6 +78,7 @@ async def predict_route(request: Request, file:UploadFile = File(...)):
         y_pred  = network_model.predict(df)
         df["predicted_column"] = y_pred
         logging.info(f"Prediction complete — {len(y_pred)} samples, saving output CSV")
+        os.makedirs("prediction_output", exist_ok=True)
         df.to_csv("prediction_output/output.csv", index=False)
         table_html = df.to_html(classes = "table table-striped")
 
