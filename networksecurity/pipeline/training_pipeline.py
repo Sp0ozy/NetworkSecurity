@@ -91,27 +91,33 @@ class TrainPipeline:
     def sync_artifact_dir_to_s3(self):
         try:
             aws_bucket_url = f"s3://{TRAINING_BUCKET_NAME}/artifact/{self.training_pipeline_config.timestamp}"
+            logging.info(f"Syncing artifact dir to S3: {self.training_pipeline_config.artifact_dir} -> {aws_bucket_url}")
             self.s3_sync.sync_folder_to_s3(folder=self.training_pipeline_config.artifact_dir, aws_bucket_url=aws_bucket_url)
+            logging.info("Artifact dir sync to S3 completed")
         except Exception as e:
             raise NetworkSecurityException(e, sys) from e
-        
+
     # local final is going to s3 bucket
     def sync_saved_model_dir_to_s3(self):
         try:
             aws_bucket_url = f"s3://{TRAINING_BUCKET_NAME}/final_model/{self.training_pipeline_config.timestamp}"
+            logging.info(f"Syncing final model dir to S3: {self.training_pipeline_config.model_dir} -> {aws_bucket_url}")
             self.s3_sync.sync_folder_to_s3(folder=self.training_pipeline_config.model_dir, aws_bucket_url=aws_bucket_url)
+            logging.info("Final model dir sync to S3 completed")
         except Exception as e:
             raise NetworkSecurityException(e, sys) from e
-        
+
     def run_pipeline(self):
         try:
+            logging.info("========== Training pipeline started ==========")
             data_ingestion_artifact = self.start_data_ingestion()
             data_validation_artifact = self.start_data_validation(data_ingestion_artifact=data_ingestion_artifact)
-            data_transformation_artifact = self.start_data_transformation(data_validation_artifact=data_validation_artifact) 
+            data_transformation_artifact = self.start_data_transformation(data_validation_artifact=data_validation_artifact)
             model_trainer_artifact = self.start_model_trainer(data_transformation_artifact=data_transformation_artifact)
-            
+
             self.sync_artifact_dir_to_s3()
             self.sync_saved_model_dir_to_s3()
+            logging.info("========== Training pipeline completed ==========")
         except Exception as e:
             raise NetworkSecurityException(e, sys) from e
 

@@ -17,11 +17,15 @@ def get_classification_score(y_true, y_pred) -> ClassificationMetricArtifact:
     """
     Computes classification metrics and returns them in a ClassificationMetricArtifact object.
     """
-    try:        
+    try:
+        f1 = f1_score(y_true, y_pred)
+        precision = precision_score(y_true, y_pred)
+        recall = recall_score(y_true, y_pred)
+        logging.info(f"Classification metrics — f1={f1:.4f}  precision={precision:.4f}  recall={recall:.4f}")
         return ClassificationMetricArtifact(
-            f1_score=f1_score(y_true, y_pred),
-            precision_score=precision_score(y_true, y_pred),
-            recall_score=recall_score(y_true, y_pred)
+            f1_score=f1,
+            precision_score=precision,
+            recall_score=recall
         )
     except Exception as e:
         raise NetworkSecurityException(e, sys)
@@ -32,12 +36,16 @@ def evaluate_models(X_train, y_train, X_test, y_test, params, models: dict) -> d
     """
     try:
         report={}
-        for i in range(len(list(models))):
+        model_names = list(models.keys())
+        for i in range(len(model_names)):
+            model_name = model_names[i]
             model = list(models.values())[i]
-            model_params = params[list(models.keys())[i]]
+            model_params = params[model_name]
 
+            logging.info(f"Evaluating model: {model_name}  (param grid: {model_params})")
             gs = GridSearchCV(model, model_params, cv=3)
             gs.fit(X_train, y_train)
+            logging.info(f"Best params for {model_name}: {gs.best_params_}")
 
             model.set_params(**gs.best_params_)
             model.fit(X_train, y_train)
@@ -47,24 +55,27 @@ def evaluate_models(X_train, y_train, X_test, y_test, params, models: dict) -> d
 
             train_model_score = r2_score(y_train, y_train_pred)
             test_model_score = r2_score(y_test, y_test_pred)
+            logging.info(f"{model_name} — train R2={train_model_score:.4f}  |  test R2={test_model_score:.4f}")
 
-            report[list(models.keys())[i]] = test_model_score
+            report[model_name] = test_model_score
         return report
     except Exception as e:
         raise NetworkSecurityException(e, sys)
-    
+
 class NetworkModel:
     def __init__(self, preprocessor, model):
-        try:    
+        try:
             self.preprocessor = preprocessor
             self.model = model
         except Exception as e:
             raise NetworkSecurityException(e, sys)
-    
+
     def predict(self, X):
         try:
+            logging.info(f"Running prediction on input with shape {X.shape}")
             X = self.preprocessor.transform(X)
             y_hat = self.model.predict(X)
+            logging.info(f"Prediction complete — {len(y_hat)} samples predicted")
             return y_hat
         except Exception as e:
             raise NetworkSecurityException(e, sys)

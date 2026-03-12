@@ -29,10 +29,12 @@ load_dotenv()
 
 mongodb_urls = os.getenv("MONGO_DB_URL")
 
+logging.info(f"Connecting to MongoDB (database={DATA_INGESTION_DATABASE_NAME}, collection={DATA_INGESTION_COLLECTION_NAME})")
 client = pymongo.MongoClient(mongodb_urls, tlsCAFile=ca)
 
 database = client[DATA_INGESTION_DATABASE_NAME]
 collection = database[DATA_INGESTION_COLLECTION_NAME]
+logging.info("MongoDB connection established")
 
 app = FastAPI()
 orgins = ["*"]
@@ -55,33 +57,39 @@ async def index():
 @app.get("/train")
 async def train_route():
     try:
-        train_pipeline = TrainPipeline( training_pipeline_config=TrainingPipelineConfig())
+        logging.info("Received request to /train — starting training pipeline")
+        train_pipeline = TrainPipeline(training_pipeline_config=TrainingPipelineConfig())
         train_pipeline.run_pipeline()
+        logging.info("Training pipeline completed successfully via /train endpoint")
         return Response(content="Training successful!!", media_type="text/plain")
     except Exception as e:
+        logging.error(f"Training pipeline failed: {str(e)}")
         raise NetworkSecurityException(e, sys)
 
 @app.post("/predict")
 async def predict_route(request: Request, file:UploadFile = File(...)):
     try:
+        logging.info(f"Received prediction request for file: {file.filename}")
         df=pd.read_csv(file.file)
+        logging.info(f"Uploaded CSV loaded with shape {df.shape}")
         preprocessor = load_object("final_model/preprocessor.pkl")
         model = load_object("final_model/model.pkl")
         network_model = NetworkModel(preprocessor=preprocessor, model=model)
-        print(df.iloc[0])
         y_pred  = network_model.predict(df)
-        print(y_pred)
         df["predicted_column"] = y_pred
+        logging.info(f"Prediction complete — {len(y_pred)} samples, saving output CSV")
         df.to_csv("prediction_output/output.csv", index=False)
         table_html = df.to_html(classes = "table table-striped")
 
         return templates.TemplateResponse("table.html", {"request": request, "table_html": table_html})
 
     except Exception as e:
+        logging.error(f"Prediction failed: {str(e)}")
         raise NetworkSecurityException(e, sys)
 
 if __name__ == "__main__":
     try:
+        logging.info("Starting FastAPI app on 0.0.0.0:8000")
         app_run(app, host="0.0.0.0", port=8000)
     except Exception as e:
         raise NetworkSecurityException(e, sys)

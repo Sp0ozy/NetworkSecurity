@@ -32,43 +32,50 @@ class DataTransformation:
     
     def get_data_transformer_object(self) -> Pipeline:
         try:
-            logging.info("Creating data transformer object")
+            logging.info(f"Creating KNNImputer pipeline with params: {DATA_TRANSFORMATION_IMPUTER_PARAMS}")
             imputer:KNNImputer=KNNImputer(**DATA_TRANSFORMATION_IMPUTER_PARAMS)
             processor:Pipeline=Pipeline([('imputer', imputer)])
             return processor
         except Exception as e:
             raise NetworkSecurityException(e, sys) from e
-    
+
     def initiate_data_transformation(self) -> DataTransformationArtifact:
         try:
             logging.info("Starting data transformation")
             train_df = self.read_data(self.data_validation_artifact.valid_train_file_path)
             test_df = self.read_data(self.data_validation_artifact.valid_test_file_path)
-            logging.info("Creating imputer pipeline")
+            logging.info(f"Train shape: {train_df.shape}  |  Test shape: {test_df.shape}")
 
             input_feature_train_df = train_df.drop(TARGET_COLUMN, axis=1)
             target_feature_train_df = train_df[TARGET_COLUMN]
+            logging.info(f"Train target distribution before binarization: {target_feature_train_df.value_counts().to_dict()}")
             target_feature_train_df = target_feature_train_df.replace(-1, 0)
+            logging.info(f"Train target distribution after binarization: {target_feature_train_df.value_counts().to_dict()}")
 
             input_feature_test_df = test_df.drop(TARGET_COLUMN, axis=1)
             target_feature_test_df = test_df[TARGET_COLUMN]
             target_feature_test_df = target_feature_test_df.replace(-1, 0)
 
             preprocessor_object: Pipeline = self.get_data_transformer_object()
-            logging.info("Applying imputer on training data")
+            logging.info("Fitting imputer on training features")
 
             preprocessor_object.fit(input_feature_train_df)
+            logging.info("Imputer fitted. Transforming train and test features")
             transformed_input_train_feature = preprocessor_object.transform(input_feature_train_df)
             transformed_input_test_feature = preprocessor_object.transform(input_feature_test_df)
             train_arr = np.c_[transformed_input_train_feature, np.array(target_feature_train_df)]
             test_arr = np.c_[transformed_input_test_feature, np.array(target_feature_test_df)]
+            logging.info(f"Transformed arrays — train: {train_arr.shape}  |  test: {test_arr.shape}")
 
-            logging.info("Saving transformed data and preprocessor object")
+            logging.info(f"Saving transformed train array to {self.data_transformation_config.transformed_train_file_path}")
             save_numpy_array_data(self.data_transformation_config.transformed_train_file_path, train_arr)
+            logging.info(f"Saving transformed test array to {self.data_transformation_config.transformed_test_file_path}")
             save_numpy_array_data(self.data_transformation_config.transformed_test_file_path, test_arr)
+            logging.info(f"Saving preprocessor object to {self.data_transformation_config.transformed_object_file_path}")
             save_object(self.data_transformation_config.transformed_object_file_path, preprocessor_object)
-            
+
             save_object("final_model/preprocessor.pkl", preprocessor_object)
+            logging.info("Preprocessor also saved to final_model/preprocessor.pkl")
 
             data_transformation_artifact = DataTransformationArtifact(
                 transformed_object_file_path=self.data_transformation_config.transformed_object_file_path,

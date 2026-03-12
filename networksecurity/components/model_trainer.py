@@ -29,15 +29,18 @@ class ModelTrainer:
         
     def track_mlflow(self, best_model, classificatio_metric):
         try:
+            logging.info("Initializing DagShub for MLflow tracking")
             dagshub.init(repo_owner='Sp0ozy', repo_name='NetworkSecurity', mlflow=True)
         except Exception as e:
             logging.warning(f"DagHub initialization failed: {e}. MLflow tracking may not work.")
-        
+
+        logging.info("Starting MLflow run to log metrics and model")
         with mlflow.start_run():
             mlflow.log_param("f1_score", classificatio_metric.f1_score)
             mlflow.log_param("precision_score", classificatio_metric.precision_score)
             mlflow.log_param("recall_score", classificatio_metric.recall_score)
             mlflow.sklearn.log_model(best_model, "model")
+        logging.info(f"MLflow run completed — f1={classificatio_metric.f1_score:.4f}  precision={classificatio_metric.precision_score:.4f}  recall={classificatio_metric.recall_score:.4f}")
         
     def train_model(self, X_train, y_train, X_test, y_test):
         try:
@@ -89,34 +92,44 @@ class ModelTrainer:
                     # "loss": ["linear", "square", "exponential"]
                 }
             }
+            logging.info(f"Starting model evaluation — X_train: {X_train.shape}  |  X_test: {X_test.shape}")
             model_report: dict = evaluate_models(X_train=X_train, y_train=y_train, X_test=X_test, y_test=y_test,
                                                   models=models, params=params)
-            
+
+            logging.info(f"Model evaluation scores: {model_report}")
             best_model_score = max(sorted(model_report.values()))
             best_model_name = list(model_report.keys())[
                 list(model_report.values()).index(best_model_score)
             ]
             best_model = models[best_model_name]
-            logging.info(f"Best found model on both training and testing dataset is {best_model_name}")
+            logging.info(f"Best model: {best_model_name}  (test R2={best_model_score:.4f})")
+
+            if best_model_score < self.model_trainer_config.expected_score:
+                logging.warning(f"Best model score {best_model_score:.4f} is below expected threshold {self.model_trainer_config.expected_score:.4f}")
 
             y_train_pred = best_model.predict(X_train)
             classification_train_metric = get_classification_score(y_true=y_train, y_pred=y_train_pred)
-            
+            logging.info(f"Train metrics — f1={classification_train_metric.f1_score:.4f}  precision={classification_train_metric.precision_score:.4f}  recall={classification_train_metric.recall_score:.4f}")
+
             y_test_pred = best_model.predict(X_test)
             classification_test_metric = get_classification_score(y_true=y_test, y_pred=y_test_pred)
+            logging.info(f"Test metrics  — f1={classification_test_metric.f1_score:.4f}  precision={classification_test_metric.precision_score:.4f}  recall={classification_test_metric.recall_score:.4f}")
 
             # Track the mlflow
             self.track_mlflow(best_model, classification_test_metric)
 
             preprocessor = load_object(file_path=self.data_transformation_artifact.transformed_object_file_path)
+            logging.info(f"Loaded preprocessor from {self.data_transformation_artifact.transformed_object_file_path}")
 
             model_dir_path = os.path.join(self.model_trainer_config.model_trainer_dir, best_model_name)
             os.makedirs(model_dir_path, exist_ok=True)
 
             network_model = NetworkModel(preprocessor=preprocessor, model=best_model)
             save_object(self.model_trainer_config.trained_model_file_path, obj=network_model)
+            logging.info(f"NetworkModel saved to {self.model_trainer_config.trained_model_file_path}")
 
             save_object("final_model/model.pkl", best_model)
+            logging.info("Best model also saved to final_model/model.pkl")
 
             model_trainer_artifact = ModelTrainerArtifact(
                 trained_model_file_path=self.model_trainer_config.trained_model_file_path,
@@ -133,16 +146,19 @@ class ModelTrainer:
         try:
             train_file_path = self.data_transformation_artifact.transformed_train_file_path
             test_file_path = self.data_transformation_artifact.transformed_test_file_path
-            
-            logging.info("Loading transformed training and testing data")
+
+            logging.info(f"Loading transformed train array from {train_file_path}")
             train_arr = load_numpy_array_data(train_file_path)
+            logging.info(f"Loading transformed test array from {test_file_path}")
             test_arr = load_numpy_array_data(test_file_path)
-            logging.info("Loaded transformed training and testing data successfully")
+            logging.info(f"Arrays loaded — train: {train_arr.shape}  |  test: {test_arr.shape}")
 
             X_train, y_train = train_arr[:,:-1], train_arr[:,-1]
             X_test, y_test = test_arr[:,:-1], test_arr[:,-1]
+            logging.info(f"Feature/target split — X_train: {X_train.shape}  y_train: {y_train.shape}  |  X_test: {X_test.shape}  y_test: {y_test.shape}")
 
             model_trainer_artifact = self.train_model(X_train, y_train, X_test, y_test)
+            logging.info("Model training completed successfully")
 
             return model_trainer_artifact
         except Exception as e:
