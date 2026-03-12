@@ -123,4 +123,4 @@ This is a learning project and there are a few areas that could be stronger:
 
 ## Tools & AI Assistance
 
-I used **Claude** (by Anthropic) throughout this project as a coding assistant — for debugging issues, adding structured logging across the codebase, fixing bugs (wrong evaluation metric, broken HTML template, encoding errors on Windows), and reviewing code for inconsistencies. This README was written with Claude's help.
+I used **Claude** (by Anthropic) at the end of this project as a coding assistant — for debugging issues, adding structured logging across the codebase, fixing bugs (wrong evaluation metric, broken HTML template, encoding errors on Windows), and reviewing code for inconsistencies. This README was written with Claude's help.
